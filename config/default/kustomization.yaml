@@ -1,0 +1,6 @@
+namePrefix: spire-eks-workload-registrar-
+
+resources:
+- ../crd
+- ../rbac
+- ../manager

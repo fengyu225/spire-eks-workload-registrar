@@ -1,0 +1,13 @@
+apiVersion: eksclusterregistry.spire.spiffe.io/v1alpha1
+kind: EKSClusterRegistry
+metadata:
+  name: eksclusterregistry-sample
+spec:
+  clusterName: "my-eks-cluster"
+  region: "us-west-2"
+  accountId: "123456789012"
+  enabled: true
+  assumeRoleArn: "arn:aws:iam::123456789012:role/EKSClusterRole"
+  labels:
+    environment: "production"
+    team: "platform"

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-eks-workload-registrar-config
+  namespace: spire-system
+data:
+  controller-manager-config.yaml: |
+    apiVersion: eksclusterregistry.spire.spiffe.io/v1alpha1
+    kind: ControllerManagerConfig
+    metadata:
+      name: spire-eks-workload-registrar-config
+      namespace: spire-system
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    health:
+      healthProbeBindAddress: 127.0.0.1:8081
+      readinessEndpointName: readyz
+      livenessEndpointName: healthz
+    leaderElection:
+      leaderElect: true
+      resourceName: spire-eks-workload-registrar.spire.io
+      resourceNamespace: spire-system
+      leaseDuration: 15s
+      renewDeadline: 10s
+      retryPeriod: 2s
+    syncPeriod: 10m
+    trustDomain: ${TRUST_DOMAIN}
+    clusterName: ${CLUSTER_NAME}
+    entryIDPrefix: eks-workload
+    spireServerSocketPath: /run/spire/sockets/server.sock
+    gcInterval: 10m
+    ignoreNamespaces:
+      - ^kube-system$
+      - ^kube-public$
+      - ^kube-node-lease$
+      - ^spire-system$
+      - ^cert-manager$
+    aws:
+      region: ${AWS_REGION}
+      accountIds:
+        - ${AWS_ACCOUNT_ID_1}
+        - ${AWS_ACCOUNT_ID_2}
+        - ${AWS_ACCOUNT_ID_3}

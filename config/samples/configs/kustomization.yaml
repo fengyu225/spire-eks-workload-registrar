@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: spire-system
+
+resources:
+- configmap.yaml
+
+images:
+- name: spire-eks-workload-registrar
+  newTag: latest
+
+commonLabels:
+  app.kubernetes.io/name: spire-eks-workload-registrar
+  app.kubernetes.io/version: latest
+  app.kubernetes.io/component: controller
+  app.kubernetes.io/part-of: spire
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: spire-eks-workload-registrar
+  spec:
+    template:
+      spec:
+        containers:
+        - name: manager
+          env:
+          - name: TRUST_DOMAIN
+            value: "example.com"
+          - name: CLUSTER_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: AWS_REGION
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['topology.kubernetes.io/region']

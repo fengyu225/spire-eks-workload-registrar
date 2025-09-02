@@ -1,0 +1,130 @@
+# Debug Configuration Example
+# This configuration enables various levels of debug logging
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-eks-workload-registrar-debug-config
+  namespace: spire-system
+data:
+  controller_manager_config.yaml: |
+    apiVersion: config.spire.spiffe.io/v1alpha1
+    kind: ControllerManagerConfig
+    metadata:
+      labels:
+        app.kubernetes.io/name: controllerconfig
+        app.kubernetes.io/instance: controller-manager-config
+        app.kubernetes.io/component: manager
+        app.kubernetes.io/created-by: spire-eks-workload-registrar
+        app.kubernetes.io/part-of: spire-eks-workload-registrar
+        app.kubernetes.io/managed-by: kustomize
+    
+    # SPIRE Server Configuration
+    trustDomain: example.org
+    spireServerSocketPath: /run/spire/sockets/server.sock
+    
+    # Cluster Configuration
+    clusterName: debug-cluster
+    entryIDPrefix: eks-workload-debug-
+    
+    # Timing Configuration
+    gcInterval: 5m  # Shorter interval for debugging
+    
+    # Namespace Filtering (optional)
+    ignoreNamespaces:
+      - "kube-system"
+      - "kube-public"
+      - "spire-system"
+    
+    # Controller Runtime Configuration
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceName: spire-eks-workload-registrar.spire.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spire-eks-workload-registrar-debug
+  namespace: spire-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spire-eks-workload-registrar
+  template:
+    metadata:
+      labels:
+        app: spire-eks-workload-registrar
+    spec:
+      containers:
+      - name: manager
+        image: spire-eks-workload-registrar:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - --config=/etc/config/controller_manager_config.yaml
+        # Enable different levels of debug logging
+        # V(1) = High level operations (reconciliation start/end)
+        # V(2) = Medium level operations (resource loading, cluster processing)
+        # V(3) = Detailed operations (individual pods, entries)
+        # V(4) = Very detailed (individual API calls, cache operations)
+        # V(5) = Extremely detailed (entry comparisons)
+        - --zap-log-level=info
+        - --zap-devel=true
+        - --zap-encoder=console
+        - --zap-stacktrace-level=error
+        - -v=3  # Set verbosity level (1-5)
+        env:
+        - name: AWS_REGION
+          value: us-west-2
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+          readOnly: true
+        - name: spire-server-socket
+          mountPath: /run/spire/sockets
+          readOnly: true
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 8081
+          name: health
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: spire-eks-workload-registrar-debug-config
+      - name: spire-server-socket
+        hostPath:
+          path: /run/spire/sockets
+          type: DirectoryOrCreate
+      serviceAccountName: spire-eks-workload-registrar
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000

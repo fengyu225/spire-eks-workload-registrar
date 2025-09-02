@@ -1,0 +1,33 @@
+# Use Ubuntu base with AWS CLI pre-installed
+FROM ubuntu:22.04
+
+# Install dependencies and AWS CLI v2
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    unzip \
+    && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf awscliv2.zip aws \
+    && aws --version \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy SPIRE server binary from official image
+COPY --from=ghcr.io/spiffe/spire-server:1.11.0 /opt/spire/bin/spire-server /opt/spire/bin/spire-server
+
+# Create necessary directories
+RUN mkdir -p /opt/spire/bin
+RUN mkdir -p /root/.aws
+
+# Set environment variables for AWS CLI
+ENV HOME=/root
+ENV AWS_CONFIG_FILE=/root/.aws/config
+ENV AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials
+
+# Run as root for simplicity
+USER 0
+
+# Use the same entrypoint as the original image
+ENTRYPOINT ["/opt/spire/bin/spire-server", "run"]

@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- eksclusterregistry_v1alpha1_eksclusterregistry.yaml
+- workloadidentity_v1alpha1_workloadidentity.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

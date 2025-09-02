@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-app
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-app
+  namespace: test-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app
+  namespace: test-app
+  labels:
+    app: test-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      serviceAccountName: test-app
+      containers:
+      - name: app
+        image: nginx:alpine
+        command: ["/bin/sh"]
+        args: 
+        - -c
+        - |
+          apk add --no-cache curl jq
+          while true; do
+            echo "=== $(date) ==="
+            echo "Checking SPIFFE SVID..."
+            if curl -s --unix-socket /run/spire/sockets/agent.sock                  http://localhost/debug/endpoints | jq . 2>/dev/null; then
+              echo "SVID fetched successfully!"
+            else
+              echo "No SVID available yet"
+            fi
+            echo "---"
+            sleep 30
+          done
+        volumeMounts:
+        - name: spire-agent-socket
+          mountPath: /run/spire/sockets
+          readOnly: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+      volumes:
+      - name: spire-agent-socket
+        hostPath:
+          path: /run/spire/sockets
+          type: Directory

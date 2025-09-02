@@ -1,0 +1,27 @@
+apiVersion: eksclusterregistry.spire.spiffe.io/v1alpha1
+kind: WorkloadIdentity
+metadata:
+  name: workloadidentity-sample
+spec:
+  applicationName: "my-application"
+  namespace: "default"
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .Namespace }}/sa/{{ .ServiceAccount }}"
+  parentIDTemplate: "spiffe://{{ .TrustDomain }}/spire/agent/k8s_psat/{{ .ClusterName }}/{{ .NodeMeta.UID }}"
+  podSelector:
+    matchLabels:
+      app: "my-application"
+  ttl: "1h"
+  jwtTtl: "1h"
+  dnsNameTemplates:
+    - "{{ .PodName }}.{{ .Namespace }}.svc"
+    - "{{ .PodName }}.{{ .Namespace }}.svc.cluster.local"
+  workloadSelectorTemplates:
+    - "k8s:pod-label:app:{{ .AppLabel }}"
+  federatesWith:
+    - "spiffe://other-trust-domain"
+  admin: false
+  downstream: false
+  autoPopulateDNSNames: true
+  clusterSelector:
+    matchLabels:
+      environment: "production"

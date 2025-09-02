@@ -1,0 +1,27 @@
+# This rule is not used by the project spire-eks-workload-registrar itself.
+# It is provided to allow the cluster admin to help manage permissions for users.
+#
+# Grants full permissions ('*') over eksclusterregistry.spire.spiffe.io.
+# This role is intended for users authorized to modify roles and bindings within the cluster,
+# enabling them to delegate specific permissions to other users or groups as needed.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: spire-eks-workload-registrar
+    app.kubernetes.io/managed-by: kustomize
+  name: eksclusterregistry-eksclusterregistry-admin-role
+rules:
+- apiGroups:
+  - eksclusterregistry.spire.spiffe.io
+  resources:
+  - eksclusterregistries
+  verbs:
+  - '*'
+- apiGroups:
+  - eksclusterregistry.spire.spiffe.io
+  resources:
+  - eksclusterregistries/status
+  verbs:
+  - get

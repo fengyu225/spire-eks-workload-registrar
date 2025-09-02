@@ -1,0 +1,237 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+  name: workloadidentities.eksclusterregistry.spire.spiffe.io
+spec:
+  group: eksclusterregistry.spire.spiffe.io
+  names:
+    kind: WorkloadIdentity
+    listKind: WorkloadIdentityList
+    plural: workloadidentities
+    singular: workloadidentity
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.applicationName
+      name: Application
+      type: string
+    - jsonPath: .spec.namespace
+      name: Namespace
+      type: string
+    - jsonPath: .status.stats.podsSelected
+      name: Pods
+      type: integer
+    - jsonPath: .status.stats.entriesRegistered
+      name: Entries
+      type: integer
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: WorkloadIdentity is the Schema for the workloadidentities API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: WorkloadIdentitySpec defines the desired state of WorkloadIdentity
+            properties:
+              admin:
+                description: Admin indicates if this is an admin workload
+                type: boolean
+              applicationName:
+                description: ApplicationName identifies the application
+                type: string
+              autoPopulateDNSNames:
+                description: AutoPopulateDNSNames enables automatic DNS name population
+                type: boolean
+              clusterSelector:
+                description: ClusterSelector selects which clusters to apply this
+                  to
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              dnsNameTemplates:
+                description: DNSNameTemplates are templates for DNS names
+                items:
+                  type: string
+                type: array
+              downstream:
+                description: Downstream indicates if this is a downstream SPIRE server
+                type: boolean
+              federatesWith:
+                description: FederatesWith is a list of trust domains to federate
+                  with
+                items:
+                  type: string
+                type: array
+              hint:
+                description: Hint is an optional hint for the entry
+                type: string
+              jwtTtl:
+                description: JWTTTL is the TTL for JWT SVIDs
+                type: string
+              namespace:
+                description: Namespace is the target namespace in workload clusters
+                type: string
+              parentIDTemplate:
+                description: ParentIDTemplate is the parent ID template (optional)
+                type: string
+              podSelector:
+                description: PodSelector selects the pods that are targeted
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              spiffeIDTemplate:
+                description: SPIFFEIDTemplate is the SPIFFE ID template
+                type: string
+              ttl:
+                description: TTL is the TTL for X509 SVIDs
+                type: string
+              workloadSelectorTemplates:
+                description: WorkloadSelectorTemplates are templates for workload
+                  selectors
+                items:
+                  type: string
+                type: array
+            required:
+            - applicationName
+            - namespace
+            - spiffeIDTemplate
+            type: object
+          status:
+            description: WorkloadIdentityStatus defines the observed state of WorkloadIdentity
+            properties:
+              lastReconciliation:
+                description: LastReconciliation is the last reconciliation time
+                format: date-time
+                type: string
+              stats:
+                description: Stats contains registration statistics
+                properties:
+                  clustersTargeted:
+                    description: ClustersTargeted is the number of clusters targeted
+                    type: integer
+                  entriesRegistered:
+                    description: EntriesRegistered is the number of entries registered
+                    type: integer
+                  entryFailures:
+                    description: EntryFailures is the number of entry failures
+                    type: integer
+                  namespacesFound:
+                    description: NamespacesFound is the number of namespaces found
+                    type: integer
+                  podsSelected:
+                    description: PodsSelected is the number of pods selected
+                    type: integer
+                required:
+                - clustersTargeted
+                - entriesRegistered
+                - entryFailures
+                - namespacesFound
+                - podsSelected
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

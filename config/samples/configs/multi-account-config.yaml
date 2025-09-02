@@ -1,0 +1,41 @@
+apiVersion: eksclusterregistry.spire.spiffe.io/v1alpha1
+kind: ControllerManagerConfig
+metadata:
+  name: spire-eks-workload-registrar-multi-account
+  namespace: spire-system
+metrics:
+  bindAddress: 127.0.0.1:8080
+health:
+  healthProbeBindAddress: 127.0.0.1:8081
+  readinessEndpointName: readyz
+  livenessEndpointName: healthz
+leaderElection:
+  leaderElect: true
+  resourceName: spire-eks-workload-registrar.spire.io
+  resourceNamespace: spire-system
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+syncPeriod: 5m
+trustDomain: prod.example.com
+clusterName: management-cluster
+entryIDPrefix: eks-workload
+spireServerSocketPath: /run/spire/sockets/server.sock
+gcInterval: 10m
+ignoreNamespaces:
+  - ^kube-system$
+  - ^kube-public$
+  - ^kube-node-lease$
+  - ^spire-system$
+  - ^cert-manager$
+  - ^aws-.*$
+  - ^amazon-.*$
+aws:
+  region: us-west-2
+  # Multiple AWS accounts for cross-account EKS management
+  accountIds:
+    - "123456789012"  # Production account 1
+    - "987654321098"  # Production account 2
+    - "555666777888"  # Production account 3
+    - "111222333444"  # Production account 4
+  assumeRoleArn: arn:aws:iam::123456789012:role/SpireEKSWorkloadRegistrarRole

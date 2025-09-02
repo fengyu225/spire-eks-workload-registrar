@@ -1,0 +1,59 @@
+# SPIRE EKS Workload Registrar Controller
+# This is a minimal configuration for the controller when used as a sidecar
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controller-container-config
+  namespace: system
+data:
+  # Container specification for sidecar deployment
+  container.yaml: |
+    name: controller
+    image: spire-eks-workload-registrar:latest
+    imagePullPolicy: Always
+    args:
+      - --config=/config/config.yaml
+      - --expand-env=false
+    env:
+    - name: AWS_REGION
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.annotations['aws.amazon.com/region']
+    ports:
+    - containerPort: 8080
+      name: metrics
+      protocol: TCP
+    - containerPort: 8082
+      name: health
+      protocol: TCP
+    volumeMounts:
+    - name: controller-config
+      mountPath: /config
+      readOnly: true
+    - name: spire-sockets
+      mountPath: /tmp/spire-server/private
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8082
+      initialDelaySeconds: 15
+      periodSeconds: 20
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8082
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    securityContext:
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - "ALL"

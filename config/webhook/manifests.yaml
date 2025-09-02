@@ -1,0 +1,87 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: spire-controller-finalizer-webhook
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      service:
+        name: spire-controller-webhook-service
+        namespace: spire-system
+        path: /mutate-eksclusterregistry-spire-spiffe-io-v1alpha1-eksclusterregistry
+      caBundle: "" # This will be injected by the webhook manager
+    failurePolicy: Fail
+    name: meksclusterregistry.kb.io
+    rules:
+      - apiGroups:
+          - eksclusterregistry.spire.spiffe.io
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - eksclusterregistries
+    sideEffects: None
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      service:
+        name: spire-controller-webhook-service
+        namespace: spire-system
+        path: /mutate-eksclusterregistry-spire-spiffe-io-v1alpha1-workloadidentity
+      caBundle: "" # This will be injected by the webhook manager
+    failurePolicy: Fail
+    name: mworkloadidentity.kb.io
+    rules:
+      - apiGroups:
+          - eksclusterregistry.spire.spiffe.io
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - workloadidentities
+    sideEffects: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spire-controller-webhook-service
+  namespace: spire-system
+spec:
+  ports:
+    - name: webhook
+      port: 443
+      targetPort: 9443
+      protocol: TCP
+  selector:
+    app: spire-server
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: spire-controller-webhook-manager
+rules:
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources: ["mutatingwebhookconfigurations"]
+    verbs: ["get", "list", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: spire-controller-webhook-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: spire-controller-webhook-manager
+subjects:
+  - kind: ServiceAccount
+    name: spire-server
+    namespace: spire-system
